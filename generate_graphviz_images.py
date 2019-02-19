@@ -30,7 +30,7 @@ def write_dot(block: str, path: str, image_name_without_extension: str) -> None:
 def create_pdf(path: str, filename: str) -> None:
     output_filename = \
         os.path.join(path, "out", os.path.splitext(file_name)[0] + "_out.pdf")
-    os.system(f"pandoc --output={output_filename} {filename}")
+    os.system(f"pandoc --standalone --output={output_filename} {filename}")
 
 def create_html(path: str, filename: str) -> None:
     output_filename = \
