@@ -11,6 +11,8 @@ GRAPHVIZ_BLOCK_START = "```graphviz\n"
 CONTENT_BLOCK = ".+?"
 BLOCK_END = "\n```"
 
+SCRIPT_PATH: str = os.path.dirname(os.path.realpath(__file__))
+
 def get_graphviz_blocks(markdown_text: str) -> List[str]:
     MARKDOWN_BLOCK_RE = f"{GRAPHVIZ_BLOCK_START}{CONTENT_BLOCK}{BLOCK_END}"
     return re.findall(MARKDOWN_BLOCK_RE, markdown_text, re.DOTALL)
@@ -32,10 +34,17 @@ def create_pdf(path: str, filename: str) -> None:
         os.path.join(path, "out", os.path.splitext(file_name)[0] + "_out.pdf")
     os.system(f"pandoc --standalone --output={output_filename} {filename}")
 
-def create_html(path: str, filename: str) -> None:
+def create_html(path: str, filename: str, use_css: bool) -> None:
     output_filename = \
         os.path.join(path, "out", os.path.splitext(file_name)[0] + "_out.html")
-    os.system(f"pandoc --output={output_filename} {filename}")
+    css_arg = "--css pandoc.css" if use_css else ""
+    os.system(f"pandoc --standalone {css_arg} --output={output_filename} {filename}")
+    os.system(f'echo "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />" >> {output_filename}')
+    if use_css:
+        pandoc_css_path = os.path.join(SCRIPT_PATH, "pandoc.css")
+        output_css_path: str = os.path.join(path, "out", "pandoc.css")
+        print(f"Copying over pandoc.css to {output_css_path}")
+        os.system(f"cp {pandoc_css_path} {output_css_path}")
 
 def write_image_from_dot_file(path: str,
                               image_name_without_extension: str,
@@ -132,4 +141,4 @@ if __name__ == "__main__":
     if args.output_pdf:
         create_pdf(path, filename=output_filename)
     elif args.output_html:
-        create_html(path, filename=output_filename)
+        create_html(path, filename=output_filename, use_css=True)
