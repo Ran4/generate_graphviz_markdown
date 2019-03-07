@@ -1,15 +1,19 @@
 ﻿#!/usr/bin/env python3
 import re
+import warnings
 import os
 import argparse
 import sys
-from typing import List
+from typing import List, Dict
 import platform
 
 VALID_DOT_IMAGE_FORMATS = ["png", "jpg", "svg"]
 GRAPHVIZ_BLOCK_START = "```graphviz\n"
+PUML_BLOCK_START = "```plantuml\n"
 CONTENT_BLOCK = ".+?"
 BLOCK_END = "\n```"
+
+VALID_PUML_IMAGE_FORMATS = ["png", "svg"]
 
 SCRIPT_PATH: str = os.path.dirname(os.path.realpath(__file__))
 
@@ -17,15 +21,33 @@ def get_graphviz_blocks(markdown_text: str) -> List[str]:
     MARKDOWN_BLOCK_RE = f"{GRAPHVIZ_BLOCK_START}{CONTENT_BLOCK}{BLOCK_END}"
     return re.findall(MARKDOWN_BLOCK_RE, markdown_text, re.DOTALL)
 
+def get_plantuml_blocks(markdown_text: str) -> List[str]:
+    # TODO: Implement this
+    MARKDOWN_BLOCK_RE = f"{PUML_BLOCK_START}{CONTENT_BLOCK}{BLOCK_END}"
+    return re.findall(MARKDOWN_BLOCK_RE, markdown_text, re.DOTALL)
+
+def get_blocks(markdown_text: str) -> Dict[str, List[str]]:
+    # TODO: Use this function
+    return {
+        "graphviz": get_graphviz_blocks(markdown_text),
+        "plantuml": get_plantuml_blocks(markdown_text),
+    }
+
 def find_content_in_block(block: str) -> str:
-    CONTENT_PATTERN = f"{GRAPHVIZ_BLOCK_START}(?P<content>{CONTENT_BLOCK}){BLOCK_END}"
+    if block.startswith(GRAPHVIZ_BLOCK_START):
+        block_start = GRAPHVIZ_BLOCK_START
+    elif block.startswith(PUML_BLOCK_START):
+        block_start = PUML_BLOCK_START
+    else:
+        raise Exception("Unknown start of block", block)
+    CONTENT_PATTERN = f"{block_start}(?P<content>{CONTENT_BLOCK}){BLOCK_END}"
     return re.search(CONTENT_PATTERN, block, re.DOTALL).group("content")
 
-def write_dot(block: str, path: str, image_name_without_extension: str) -> None:
+def write_text_file(block: str, path: str, image_name: str) -> None:
     content: str = find_content_in_block(block)
-    dot_output_file = os.path.join(path, image_name_without_extension + ".dot")
-    print(f"Wrote dot to {dot_output_file}")
-    with open(dot_output_file, "w") as f:
+    text_output_file = os.path.join(path, image_name)
+    print(f"        Wrote text file to {text_output_file}")
+    with open(text_output_file, "w") as f:
         f.write(content)
 
 def copy_css_file(path: str) -> None:
@@ -61,19 +83,52 @@ def write_image_from_dot_file(path: str,
     dot_file_path = os.path.join(path, image_name_without_extension + ".dot")
     image_file_path = os.path.join(path, image_name_without_extension + "." + fmt)
     command = f"{DOT_COMMAND} -T{fmt} {dot_file_path} > {image_file_path}"
+    print(f"        Running command {command}")
+    os.system(command)
+    return image_file_path
+
+def write_image_from_plantuml_file(path: str,
+                                   image_name_without_extension: str,
+                                   fmt: str) \
+                                   -> str:
+    assert fmt in VALID_PUML_IMAGE_FORMATS
+    warnings.warn("Missing correct PUML command")
+    if platform.system() == "Windows":
+        PUML_COMMAND = "copy"
+    else:
+        PUML_COMMAND = "cp"
+    puml_file_path = os.path.join(path, image_name_without_extension + ".plantuml")
+    image_file_path = os.path.join(path, image_name_without_extension + "." + fmt)
+    command = f"{PUML_COMMAND} {puml_file_path} > {image_file_path}"
     print(f"Running command {command}")
     os.system(command)
     return image_file_path
 
-def get_output_markdown_text_and_write_images(
+def get_output_markdown_text_and_write_graphviz_images(
         markdown_text: str, graphviz_blocks: List[str], path: str, fmt: str) \
         -> str:
-    print(f"Found {len(graphviz_blocks)} graphviz blocks")
+    print(f"\nFound {len(graphviz_blocks)} graphviz blocks")
     for block_index, block in enumerate(graphviz_blocks):
-        print(f"Found block of size {len(block)}")
+        print(f"    * Graphviz block {block_index+1} of {len(graphviz_blocks)}")
         name_without_extension: str = f"graphviz_image_{block_index}"
-        write_dot(block, path, name_without_extension)
+        write_text_file(block, path, name_without_extension + ".dot")
         write_image_from_dot_file(path, name_without_extension, fmt=fmt)
+        image_path_in_markdown = f"./images/{name_without_extension}.{fmt}"
+        image_link: str = f"![image]({image_path_in_markdown})"
+
+        markdown_text = markdown_text.replace(block, image_link)
+
+    return markdown_text
+
+def get_output_markdown_text_and_write_puml_images(
+        markdown_text: str, puml_blocks: List[str], path: str, fmt: str) \
+        -> str:
+    print(f"\nFound {len(puml_blocks)} plantUML blocks")
+    for block_index, block in enumerate(puml_blocks):
+        print(f"    * Plantuml block {block_index+1} of {len(puml_blocks)}")
+        name_without_extension: str = f"plantuml_image_{block_index}"
+        write_text_file(block, path, name_without_extension + ".plantuml")
+        write_image_from_plantuml_file(path, name_without_extension, fmt=fmt)
         image_path_in_markdown = f"./images/{name_without_extension}.{fmt}"
         image_link: str = f"![image]({image_path_in_markdown})"
 
@@ -85,32 +140,38 @@ def ensure_directory_exists(directory: str) -> None:
     if not os.path.exists(directory):
         os.makedirs(directory)
 
-def replace_graphviz_with_images(path: str, file_name: str, fmt: str) -> str:
+def replace_md_blocks_with_images(path: str, file_name: str, fmt: str) -> str:
     """
     Opens file specified by path + file_name, then writes
-    * A new markdown file where all graphviz blocks are replaced.
-    * One image for every graphviz block found in the markdown file
+    * A new markdown file where all graphviz+plantuml blocks are replaced.
+    * One image for every graphviz and plantuml block found in the markdown file
     """
     with open(os.path.join(path, file_name)) as f:
         markdown_text: str = f.read()
-    graphviz_blocks: List[str] = get_graphviz_blocks(markdown_text)
+    blocks: Dict[str, List[str]] = get_blocks(markdown_text)
+    graphviz_blocks: List[str] = blocks["graphviz"]
+    plantuml_blocks: List[str] = blocks["plantuml"]
 
-    if not graphviz_blocks:
-        print("No graphviz blocks found!")
+    if not graphviz_blocks and not plantuml_blocks:
+        print("No graphviz or plantuml blocks found!")
         exit()
 
     images_path = os.path.join(path, "out", "images")
     ensure_directory_exists(images_path)
 
-    output_markdown_text = \
-        get_output_markdown_text_and_write_images(
+    markdown_text = \
+        get_output_markdown_text_and_write_graphviz_images(
             markdown_text, graphviz_blocks, images_path, fmt=fmt)
+
+    markdown_text = \
+        get_output_markdown_text_and_write_puml_images(
+            markdown_text, plantuml_blocks, images_path, fmt=fmt)
 
     output_filename = \
         os.path.join(path, "out", os.path.splitext(file_name)[0] + "_out.md")
     with open(output_filename, "w") as f:
-        f.write(output_markdown_text)
-    print(f"Wrote output file to {output_filename}")
+        f.write(markdown_text)
+    print(f"\nWrote output file to {output_filename}")
     return output_filename
 
 def get_arg_parser() -> argparse.ArgumentParser:
@@ -139,7 +200,7 @@ if __name__ == "__main__":
     path, file_name = os.path.dirname(full_path), os.path.basename(full_path)
     fmt: str = args.image_format
 
-    output_filename = replace_graphviz_with_images(path, file_name, fmt)
+    output_filename = replace_md_blocks_with_images(path, file_name, fmt)
 
     if args.output_pdf:
         create_pdf(path, filename=output_filename)
