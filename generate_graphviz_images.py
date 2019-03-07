@@ -28,11 +28,17 @@ def write_dot(block: str, path: str, image_name_without_extension: str) -> None:
     with open(dot_output_file, "w") as f:
         f.write(content)
 
+def copy_css_file(path: str) -> None:
+    pandoc_css_path = os.path.join(SCRIPT_PATH, "pandoc.css")
+    output_css_path: str = os.path.join(path, "out", "pandoc.css")
+    print(f"Copying over pandoc.css to {output_css_path}")
+    os.system(f"cp {pandoc_css_path} {output_css_path}")
 
 def create_pdf(path: str, filename: str) -> None:
     output_filename = \
         os.path.join(path, "out", os.path.splitext(file_name)[0] + "_out.pdf")
-    os.system(f"pandoc --standalone --output={output_filename} {filename}")
+    os.system(f"pandoc --css pandoc.css --standalone --output={output_filename} {filename}")
+    copy_css_file(path=path)
 
 def create_html(path: str, filename: str, use_css: bool) -> None:
     output_filename = \
@@ -41,10 +47,7 @@ def create_html(path: str, filename: str, use_css: bool) -> None:
     os.system(f"pandoc --standalone {css_arg} --output={output_filename} {filename}")
     os.system(f'echo "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />" >> {output_filename}')
     if use_css:
-        pandoc_css_path = os.path.join(SCRIPT_PATH, "pandoc.css")
-        output_css_path: str = os.path.join(path, "out", "pandoc.css")
-        print(f"Copying over pandoc.css to {output_css_path}")
-        os.system(f"cp {pandoc_css_path} {output_css_path}")
+        copy_css_file(path=path)
 
 def write_image_from_dot_file(path: str,
                               image_name_without_extension: str,
