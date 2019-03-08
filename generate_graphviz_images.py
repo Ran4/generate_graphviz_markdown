@@ -121,7 +121,7 @@ def get_output_markdown_text_and_write_graphviz_images(
         write_text_file(block, path, name_without_extension + ".dot")
         write_image_from_dot_file(path, name_without_extension, fmt=fmt)
         image_path_in_markdown = f"./images/{name_without_extension}.{fmt}"
-        image_link: str = f"![image]({image_path_in_markdown})"
+        image_link: str = f"![]({image_path_in_markdown})"
 
         markdown_text = markdown_text.replace(block, image_link)
 
@@ -137,7 +137,7 @@ def get_output_markdown_text_and_write_puml_images(
         write_text_file(block, path, name_without_extension + ".plantuml")
         write_image_from_plantuml_file(path, name_without_extension, fmt=fmt)
         image_path_in_markdown = f"./images/{name_without_extension}.{fmt}"
-        image_link: str = f"![image]({image_path_in_markdown})"
+        image_link: str = f"![]({image_path_in_markdown})"
 
         markdown_text = markdown_text.replace(block, image_link)
 
