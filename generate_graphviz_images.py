@@ -1,4 +1,10 @@
 ﻿#!/usr/bin/env python3
+"""
+External dependencies:
+* For html and pdf output: Pandoc
+* For graphviz blocks: Graphviz dot (the "dot" CLI program)
+* For plantuml blocks: The node-plantuml CLI: https://www.npmjs.com/package/node-plantuml (the "puml" CLI program)
+"""
 import re
 import warnings
 import os
@@ -92,15 +98,16 @@ def write_image_from_plantuml_file(path: str,
                                    fmt: str) \
                                    -> str:
     assert fmt in VALID_PUML_IMAGE_FORMATS
-    warnings.warn("Missing correct PUML command")
-    if platform.system() == "Windows":
-        PUML_COMMAND = "copy"
-    else:
-        PUML_COMMAND = "cp"
     puml_file_path = os.path.join(path, image_name_without_extension + ".plantuml")
     image_file_path = os.path.join(path, image_name_without_extension + "." + fmt)
-    command = f"{PUML_COMMAND} {puml_file_path} > {image_file_path}"
-    print(f"Running command {command}")
+    if fmt.lower() == "png":
+        FMT_ARG = "--png"
+    elif fmt.lower() == "svg":
+        FMT_ARG = "--svg"
+    else:
+        raise Exception(f"Unhandled plantuml image format {fmt}")
+    command = f"puml generate {FMT_ARG} {puml_file_path} -o {image_file_path}"
+    print(f"        Running command {command}")
     os.system(command)
     return image_file_path
 
