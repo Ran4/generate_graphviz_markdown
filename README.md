@@ -28,7 +28,17 @@ Assuming we have a file `path/to/file.md`:
     Example document.
 
     ```graphviz
-    Hello
+    digraph "Wonderful graphviz graph" {
+        label="\G"
+        a -> b;
+        b -> c;
+    }
+    ```
+    
+    ```plantuml
+    alice -> bob : Request
+    bob -> bob : Authorize
+    bob -> alice : Response
     ```
 
     End of document.
