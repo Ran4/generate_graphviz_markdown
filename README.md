@@ -1,5 +1,5 @@
 Hack to generate markdown with links to rendered images from a markdown document
-containing graphviz and/or plantuml blocks.
+containing inline graphviz and/or plantuml code blocks.
 
 This *should* probably be done as pandoc filters.
 
@@ -21,6 +21,29 @@ python3 generate_graphviz_images.py --help
 ```
 
 #### Example
+
+Assuming we have a file `path/to/file.md`:
+
+
+    Example document.
+
+    ```graphviz
+    digraph "Wonderful graphviz graph" {
+        label="\G"
+        a -> b;
+        b -> c;
+    }
+    ```
+    
+    ```plantuml
+    alice -> bob : Request
+    bob -> bob : Authorize
+    bob -> alice : Response
+    ```
+
+    End of document.
+
+Then this will generate a file `path/to/out/file_out.html`:
 
 ```
 python3 generate_graphviz_images.py --output-html path/to/file.md
