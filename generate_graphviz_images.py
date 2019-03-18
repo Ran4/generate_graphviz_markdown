@@ -28,16 +28,8 @@ def get_graphviz_blocks(markdown_text: str) -> List[str]:
     return re.findall(MARKDOWN_BLOCK_RE, markdown_text, re.DOTALL)
 
 def get_plantuml_blocks(markdown_text: str) -> List[str]:
-    # TODO: Implement this
     MARKDOWN_BLOCK_RE = f"{PUML_BLOCK_START}{CONTENT_BLOCK}{BLOCK_END}"
     return re.findall(MARKDOWN_BLOCK_RE, markdown_text, re.DOTALL)
-
-def get_blocks(markdown_text: str) -> Dict[str, List[str]]:
-    # TODO: Use this function
-    return {
-        "graphviz": get_graphviz_blocks(markdown_text),
-        "plantuml": get_plantuml_blocks(markdown_text),
-    }
 
 def find_content_in_block(block: str) -> str:
     if block.startswith(GRAPHVIZ_BLOCK_START):
@@ -159,9 +151,9 @@ def replace_md_blocks_with_images(path: str, file_name: str, fmt: str) -> str:
     """
     with open(os.path.join(path, file_name)) as f:
         markdown_text: str = f.read()
-    blocks: Dict[str, List[str]] = get_blocks(markdown_text)
-    graphviz_blocks: List[str] = blocks["graphviz"]
-    plantuml_blocks: List[str] = blocks["plantuml"]
+
+    graphviz_blocks: List[str] = get_graphviz_blocks(markdown_text)
+    plantuml_blocks: List[str] = get_plantuml_blocks(markdown_text)
 
     if not graphviz_blocks and not plantuml_blocks:
         print("No graphviz or plantuml blocks found!")
