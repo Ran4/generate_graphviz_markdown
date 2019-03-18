@@ -5,13 +5,13 @@ External dependencies:
 * For graphviz blocks: Graphviz dot (the "dot" CLI program)
 * For plantuml blocks: The node-plantuml CLI: https://www.npmjs.com/package/node-plantuml (the "puml" CLI program)
 """
-import re
-import warnings
-import os
-import argparse
-import sys
 from typing import List, Dict
+import argparse
+import os
 import platform
+import re
+import sys
+import warnings
 
 VALID_DOT_IMAGE_FORMATS = ["png", "jpg", "svg"]
 GRAPHVIZ_BLOCK_START = "```graphviz\n"
