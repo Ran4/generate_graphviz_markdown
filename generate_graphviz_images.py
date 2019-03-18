@@ -68,12 +68,16 @@ def create_pdf(path: str, filename: str) -> None:
     os.system(f"pandoc --css pandoc.css --standalone --output={output_filename} {filename}")
     copy_css_file(path=path)
 
+def add_content_type_meta_to_file(filename: str) -> None:
+    with open(filename, "a") as f:
+        f.write('<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />')
+
 def create_html(path: str, filename: str, use_css: bool) -> None:
     output_filename = \
         os.path.join(path, "out", os.path.splitext(file_name)[0] + "_out.html")
     css_arg = "--css pandoc.css" if use_css else ""
     os.system(f"pandoc --standalone {css_arg} --output={output_filename} {filename}")
-    os.system(f'echo "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />" >> {output_filename}')
+    add_content_type_meta_to_file(output_filename)
     if use_css:
         copy_css_file(path=path)
 
