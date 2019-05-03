@@ -157,7 +157,6 @@ def replace_md_blocks_with_images(path: str, file_name: str, fmt: str) -> str:
 
     if not graphviz_blocks and not plantuml_blocks:
         print("No graphviz or plantuml blocks found!")
-        exit()
 
     images_path = os.path.join(path, "out", "images")
     ensure_directory_exists(images_path)
