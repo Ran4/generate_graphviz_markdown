@@ -22,7 +22,7 @@ python3 generate_graphviz_images.py --help
 
 #### Example
 
-Assuming we have a file `path/to/file.md`:
+Assuming we have a file `some_path/file.md`:
 
 
     Example document.
@@ -43,8 +43,24 @@ Assuming we have a file `path/to/file.md`:
 
     End of document.
 
-Then this will generate a file `path/to/out/file_out.html`:
+Then this command:
 
 ```
 python3 generate_graphviz_images.py --output-html path/to/file.md
+```
+
+will generate a file `some_path/out/file_out.html` and associated images, like this:
+
+```
+.
+├ file.md
+└ out
+    ├ file_out.html
+    ├ file_out.md
+    ├ images
+    │   ├ graphviz_image_0.dot
+    │   ├ graphviz_image_0.svg
+    │   ├ plantuml_image_0.plantuml
+    │   └ plantuml_image_0.svg
+    └ pandoc.css
 ```
